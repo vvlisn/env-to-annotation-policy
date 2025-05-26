@@ -113,4 +113,3 @@ installs the `bats` utility and then runs the end-to-end test.
 - `unit-tests`: this action runs the Go unit tests.
 - `release`: this action builds the WebAssembly policy and pushes it to a user defined OCI registry
 ([ghcr](https://ghcr.io) is a good candidate).
-
