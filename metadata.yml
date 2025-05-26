@@ -1,0 +1,26 @@
+rules:
+  - apiGroups: ["apps"]
+    apiVersions: ["v1"]
+    resources:
+      - "deployments"
+    operations:
+      - CREATE
+      - UPDATE
+mutating: true
+contextAware: false
+executionMode: kubewarden-wapc
+backgroundAudit: false
+annotations:
+  io.artifacthub.displayName: Env to Annotation Policy
+  io.artifacthub.resources: Deployment
+  io.artifacthub.keywords: env, annotation, kubernetes, kubewarden
+  io.kubewarden.policy.ociUrl: ghcr.io/vvlisn/policies/env-to-annotation-policy
+  io.kubewarden.policy.title: env-to-annotation-policy
+  io.kubewarden.policy.description: A policy that converts specific container environment variables into pod annotations.
+  io.kubewarden.policy.author: "vvlisn <vvlisn719@gmail.com>"
+  io.kubewarden.policy.url: https://github.com/vvlisn/env-to-annotation-policy
+  io.kubewarden.policy.source: https://github.com/vvlisn/env-to-annotation-policy
+  io.kubewarden.policy.license: Apache-2.0
+  io.kubewarden.policy.severity: medium
+  io.kubewarden.policy.category: Other
+  io.kubewarden.policy.version: "0.0.1"

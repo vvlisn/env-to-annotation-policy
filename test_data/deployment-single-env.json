@@ -1,0 +1,86 @@
+{
+    "dryRun": false,
+    "kind": {
+        "group": "apps",
+        "kind": "Deployment",
+        "version": "v1"
+    },
+    "name": "test-deployment-single-env",
+    "namespace": "default",
+    "object": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+            "annotations": {
+                "io.kubewarden.policy.echo.create": "true"
+            },
+            "name": "nginx-single-env",
+            "namespace": "default"
+        },
+        "spec": {
+            "replicas": 1,
+            "selector": {
+                "matchLabels": {
+                    "app": "nginx-single-env"
+                }
+            },
+            "template": {
+                "metadata": {
+                    "labels": {
+                        "app": "nginx-single-env"
+                    }
+                },
+                "spec": {
+                    "containers": [
+                        {
+                            "image": "nginx:latest",
+                            "name": "nginx",
+                            "env": [
+                                {
+                                    "name": "vestack_varlog",
+                                    "value": "/var/log/nginx/access.log,/var/log/nginx/error.log"
+                                }
+                            ],
+                            "ports": [
+                                {
+                                    "containerPort": 80,
+                                    "protocol": "TCP"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "operation": "CREATE",
+    "options": {
+        "apiVersion": "meta.k8s.io/v1",
+        "fieldManager": "kubectl-client-side-apply",
+        "fieldValidation": "Strict",
+        "kind": "CreateOptions"
+    },
+    "requestKind": {
+        "group": "apps",
+        "kind": "Deployment",
+        "version": "v1"
+    },
+    "requestResource": {
+        "group": "apps",
+        "resource": "deployments",
+        "version": "v1"
+    },
+    "resource": {
+        "group": "apps",
+        "resource": "deployments",
+        "version": "v1"
+    },
+    "uid": "single-env-uid",
+    "userInfo": {
+        "groups": [
+            "system:masters",
+            "system:authenticated"
+        ],
+        "username": "system:admin"
+    }
+}
