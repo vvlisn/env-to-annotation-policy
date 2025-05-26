@@ -58,7 +58,11 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 	}
 
 	if len(deployment.Spec.Template.Spec.Containers) > 0 {
-		if processContainerEnv(deployment.Spec.Template.Spec.Containers[0], deployment.Spec.Template.Metadata.Annotations, settings) {
+		if processContainerEnv(
+			deployment.Spec.Template.Spec.Containers[0],
+			deployment.Spec.Template.Metadata.Annotations,
+			settings,
+		) {
 			mutated = true
 		}
 	}

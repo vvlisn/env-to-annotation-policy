@@ -59,11 +59,26 @@ func TestDeploymentMutation(t *testing.T) {
 								{
 									Name: stringPtr("my-container"),
 									Env: []*corev1.EnvVar{
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/common-api-bff/common-api-bff_info.log"},
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/service-app_pe/service-app_pe_info.log"},
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/common-api-bff/common-api-bff_info.log"},
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/app/app_info.log"},
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/service-app_pe/service-app_pe_info.log"},
+										{
+											Name:  stringPtr("vestack_varlog"),
+											Value: "/var/log/apps/common-api-bff/common-api-bff_info.log",
+										},
+										{
+											Name:  stringPtr("vestack_varlog"),
+											Value: "/var/log/apps/service-app_pe/service-app_pe_info.log",
+										},
+										{
+											Name:  stringPtr("vestack_varlog"),
+											Value: "/var/log/apps/common-api-bff/common-api-bff_info.log",
+										},
+										{
+											Name:  stringPtr("vestack_varlog"),
+											Value: "/var/log/apps/app/app_info.log",
+										},
+										{
+											Name:  stringPtr("vestack_varlog"),
+											Value: "/var/log/apps/service-app_pe/service-app_pe_info.log",
+										},
 									},
 								},
 							},
