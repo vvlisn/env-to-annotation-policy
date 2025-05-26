@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	appsv1 "github.com/kubewarden/k8s-objects/api/apps/v1"
-	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1" // 导入 metav1
+	corev1 "github.com/kubewarden/k8s-objects/api/core/v1" // 导入 corev1
+	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 )
@@ -57,35 +58,42 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 	}
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if container == nil {
-			continue
-		}
-		var logPaths []string
-		for _, env := range container.Env {
-			if env == nil || env.Name == nil {
-				continue
-			}
-			if *env.Name == settings.EnvKey {
-				logPaths = append(logPaths, env.Value)
-			}
-		}
-
-		if len(logPaths) > 0 {
-			if container.Name == nil {
-				// 如果容器没有名称，则无法为其添加带前缀的 annotation，跳过
-				continue
-			}
-			for i, path := range logPaths {
-				var annotationKey string
-				if i == 0 {
-					annotationKey = fmt.Sprintf("%s/%s", *container.Name, settings.AnnotationBase)
-				} else {
-					annotationKey = fmt.Sprintf("%s/%s", *container.Name, fmt.Sprintf(settings.AnnotationExtFormat, i))
-				}
-				deployment.Spec.Template.Metadata.Annotations[annotationKey] = path
-			}
+		if processContainerEnv(container, deployment.Spec.Template.Metadata.Annotations, settings) {
 			mutated = true
 		}
 	}
 	return mutated
+}
+
+func processContainerEnv(container *corev1.Container, annotations map[string]string, settings Settings) bool {
+	if container == nil {
+		return false
+	}
+	var logPaths []string
+	for _, env := range container.Env {
+		if env == nil || env.Name == nil {
+			continue
+		}
+		if *env.Name == settings.EnvKey {
+			logPaths = append(logPaths, env.Value)
+		}
+	}
+
+	if len(logPaths) > 0 {
+		if container.Name == nil {
+			// 如果容器没有名称，则无法为其添加带前缀的 annotation，跳过
+			return false
+		}
+		for i, path := range logPaths {
+			var annotationKey string
+			if i == 0 {
+				annotationKey = fmt.Sprintf("%s/%s", *container.Name, settings.AnnotationBase)
+			} else {
+				annotationKey = fmt.Sprintf("%s/%s", *container.Name, fmt.Sprintf(settings.AnnotationExtFormat, i))
+			}
+			annotations[annotationKey] = path
+		}
+		return true
+	}
+	return false
 }
