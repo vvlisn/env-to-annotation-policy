@@ -27,7 +27,7 @@ load 'test_helper/bats-assert/bats-assert-master/load.bash'
   patch_b64=$(echo "$output" | tail -n 1 | jq -r '.patch')
   patch_decoded=$(echo "$patch_b64" | base64 --decode)
   echo "Decoded Patch (Single Env): $patch_decoded"
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path" and .value == "/var/log/nginx/access.log,/var/log/nginx/error.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path" == "/var/log/nginx/access.log,/var/log/nginx/error.log")'
   assert_success
 }
 
@@ -44,14 +44,14 @@ load 'test_helper/bats-assert/bats-assert-master/load.bash'
   patch_b64=$(echo "$output" | tail -n 1 | jq -r '.patch')
   patch_decoded=$(echo "$patch_b64" | base64 --decode)
   echo "Decoded Patch (Multiple Env): $patch_decoded"
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path" and .value == "/var/log/apps/common-api-bff/common-api-bff_info.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path" == "/var/log/apps/common-api-bff/common-api-bff_info.log")'
   assert_success
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path_ext_1" and .value == "/var/log/apps/service-app_pe/service-app_pe_info.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path_ext_1" == "/var/log/apps/service-app_pe/service-app_pe_info.log")'
   assert_success
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path_ext_2" and .value == "/var/log/apps/common-api-bff/common-api-bff_info.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path_ext_2" == "/var/log/apps/common-api-bff/common-api-bff_info.log")'
   assert_success
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path_ext_3" and .value == "/var/log/apps/app/app_info.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path_ext_3" == "/var/log/apps/app/app_info.log")'
   assert_success
-  echo "$patch_decoded" | jq -e '[.[] | select(.path == "/metadata/annotations/co_elastic_logs_path_ext_4" and .value == "/var/log/apps/service-app_pe/service-app_pe_info.log")] | length == 1'
+  echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value."nginx/co_elastic_logs_path_ext_4" == "/var/log/apps/service-app_pe/service-app_pe_info.log")'
   assert_success
 }

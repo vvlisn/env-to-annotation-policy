@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	appsv1 "github.com/kubewarden/k8s-objects/api/apps/v1"
-	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
+	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1" // 导入 metav1
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 )
@@ -38,49 +38,54 @@ func processDeployment(req kubewarden_protocol.ValidationRequest, settings Setti
 		return kubewarden.RejectRequest(kubewarden.Message("cannot unmarshal deployment"), kubewarden.Code(RejectCode))
 	}
 
-	// 提取 env 中目标 key 的值.
-	logPaths := extractLogPathsFromContainers(deployment.Spec.Template.Spec.Containers, settings.EnvKey)
-	if len(logPaths) == 0 {
+	mutated := mutateDeploymentContainers(&deployment, settings)
+
+	if !mutated {
 		return kubewarden.AcceptRequest()
-	}
-
-	// 构造注解 map.
-	annotations := buildAnnotations(logPaths, settings)
-
-	// 将注解设置到 metadata.annotations 中.
-	if deployment.Metadata.Annotations == nil {
-		deployment.Metadata.Annotations = map[string]string{}
-	}
-	for k, v := range annotations {
-		deployment.Metadata.Annotations[k] = v
 	}
 
 	return kubewarden.MutateRequest(deployment)
 }
 
-// extractLogPathsFromContainers 提取所有容器中目标 env_key 的值.
-func extractLogPathsFromContainers(containers []*corev1.Container, targetKey string) []string {
-	var results []string
-	for _, container := range containers {
+func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings) bool {
+	mutated := false
+	if deployment.Spec.Template.Metadata == nil {
+		deployment.Spec.Template.Metadata = &metav1.ObjectMeta{}
+	}
+	if deployment.Spec.Template.Metadata.Annotations == nil {
+		deployment.Spec.Template.Metadata.Annotations = map[string]string{}
+	}
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		if container == nil {
+			continue
+		}
+		var logPaths []string
 		for _, env := range container.Env {
-			if *env.Name == targetKey {
-				results = append(results, env.Value)
+			if env == nil || env.Name == nil {
+				continue
+			}
+			if *env.Name == settings.EnvKey {
+				logPaths = append(logPaths, env.Value)
 			}
 		}
-	}
-	return results
-}
 
-// buildAnnotations 构造注解键值对.
-func buildAnnotations(logPaths []string, settings Settings) map[string]string {
-	annotations := make(map[string]string)
-	for i, path := range logPaths {
-		if i == 0 {
-			annotations[settings.AnnotationBase] = path
-		} else {
-			key := fmt.Sprintf(settings.AnnotationExtFormat, i)
-			annotations[key] = path
+		if len(logPaths) > 0 {
+			if container.Name == nil {
+				// 如果容器没有名称，则无法为其添加带前缀的 annotation，跳过
+				continue
+			}
+			for i, path := range logPaths {
+				var annotationKey string
+				if i == 0 {
+					annotationKey = fmt.Sprintf("%s/%s", *container.Name, settings.AnnotationBase)
+				} else {
+					annotationKey = fmt.Sprintf("%s/%s", *container.Name, fmt.Sprintf(settings.AnnotationExtFormat, i))
+				}
+				deployment.Spec.Template.Metadata.Annotations[annotationKey] = path
+			}
+			mutated = true
 		}
 	}
-	return annotations
+	return mutated
 }

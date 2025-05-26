@@ -57,6 +57,7 @@ func TestDeploymentMutation(t *testing.T) {
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
+									Name: stringPtr("my-container"), // 添加容器名称
 									Env: []*corev1.EnvVar{
 										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app.log"},
 									},
@@ -68,7 +69,7 @@ func TestDeploymentMutation(t *testing.T) {
 				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
 			},
 			expectedAnnotations: map[string]string{
-				"co_elastic_logs_path": "/var/log/app.log",
+				"my-container/co_elastic_logs_path": "/var/log/app.log",
 			},
 			shouldMutate: true,
 		},
@@ -85,11 +86,13 @@ func TestDeploymentMutation(t *testing.T) {
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
+									Name: stringPtr("container1"),
 									Env: []*corev1.EnvVar{
 										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app1.log"},
 									},
 								},
 								{
+									Name: stringPtr("container2"),
 									Env: []*corev1.EnvVar{
 										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app2.log"},
 									},
@@ -101,8 +104,8 @@ func TestDeploymentMutation(t *testing.T) {
 				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
 			},
 			expectedAnnotations: map[string]string{
-				"co_elastic_logs_path":       "/var/log/app1.log",
-				"co_elastic_logs_path_ext_1": "/var/log/app2.log",
+				"container1/co_elastic_logs_path": "/var/log/app1.log",
+				"container2/co_elastic_logs_path": "/var/log/app2.log",
 			},
 			shouldMutate: true,
 		},
@@ -119,6 +122,7 @@ func TestDeploymentMutation(t *testing.T) {
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
+									Name: stringPtr("my-container"),
 									Env: []*corev1.EnvVar{
 										{Name: stringPtr("OTHER_ENV"), Value: "some_value"},
 									},
@@ -129,7 +133,7 @@ func TestDeploymentMutation(t *testing.T) {
 				},
 				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
 			},
-			expectedAnnotations: nil, // No mutation expected
+			expectedAnnotations: map[string]string{}, // No mutation expected, so empty map
 			shouldMutate:        false,
 		},
 		{
@@ -147,9 +151,15 @@ func TestDeploymentMutation(t *testing.T) {
 				},
 				Spec: &appsv1.DeploymentSpec{
 					Template: &corev1.PodTemplateSpec{
+						Metadata: &metav1.ObjectMeta{ // Initialize PodTemplateSpec Metadata
+							Annotations: map[string]string{
+								"existing_template_annotation": "template_value",
+							},
+						},
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
+									Name: stringPtr("my-container"),
 									Env: []*corev1.EnvVar{
 										{Name: stringPtr("vestack_varlog"), Value: "/var/log/test.log"},
 									},
@@ -160,8 +170,8 @@ func TestDeploymentMutation(t *testing.T) {
 				},
 			},
 			expectedAnnotations: map[string]string{
-				"existing_annotation":  "value",
-				"co_elastic_logs_path": "/var/log/test.log",
+				"existing_template_annotation":      "template_value",
+				"my-container/co_elastic_logs_path": "/var/log/test.log",
 			},
 			shouldMutate: true,
 		},
@@ -214,31 +224,27 @@ func assertMutation(
 		t.Errorf("Expected mutation, but MutatedObject is nil. Message: %s", *response.Message)
 	}
 	var mutatedDeployment appsv1.Deployment
-	mutatedObjectMap, ok := response.MutatedObject.(map[string]interface{})
-	if !ok {
-		t.Fatalf("Failed to assert MutatedObject to map[string]interface{}. Actual type: %T", response.MutatedObject)
-	}
-	mutatedObjectBytes, marshalErr := json.Marshal(mutatedObjectMap)
+	mutatedObjectBytes, marshalErr := json.Marshal(response.MutatedObject)
 	if marshalErr != nil {
-		t.Fatalf("Failed to marshal mutated object map to bytes: %v", marshalErr)
+		t.Fatalf("Failed to marshal mutated object to bytes: %v", marshalErr)
 	}
 	if unmarshalErr := json.Unmarshal(mutatedObjectBytes, &mutatedDeployment); unmarshalErr != nil {
 		t.Fatalf("Failed to unmarshal mutated object bytes: %v", unmarshalErr)
 	}
 
-	if mutatedDeployment.Metadata == nil || mutatedDeployment.Metadata.Annotations == nil {
-		t.Errorf("Expected annotations to be present after mutation")
+	if mutatedDeployment.Spec.Template.Metadata == nil || mutatedDeployment.Spec.Template.Metadata.Annotations == nil {
+		t.Errorf("Expected annotations to be present after mutation in Pod Template Metadata")
 	} else {
 		for k, v := range expectedAnnotations {
-			if val, annotationOk := mutatedDeployment.Metadata.Annotations[k]; !annotationOk || val != v {
+			if val, annotationOk := mutatedDeployment.Spec.Template.Metadata.Annotations[k]; !annotationOk || val != v {
 				t.Errorf("Expected annotation %s=%s, got %s=%s", k, v, k, val)
 			}
 		}
-		if len(mutatedDeployment.Metadata.Annotations) != len(expectedAnnotations) {
+		if len(mutatedDeployment.Spec.Template.Metadata.Annotations) != len(expectedAnnotations) {
 			t.Errorf(
 				"Expected %d annotations, got %d",
 				len(expectedAnnotations),
-				len(mutatedDeployment.Metadata.Annotations),
+				len(mutatedDeployment.Spec.Template.Metadata.Annotations),
 			)
 		}
 	}
