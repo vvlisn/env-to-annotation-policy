@@ -45,7 +45,7 @@ func TestDeploymentMutation(t *testing.T) {
 		shouldMutate        bool
 	}{
 		{
-			name: "deployment with single container and target env",
+			name: "deployment with single container and multiple target envs",
 			settings: Settings{
 				EnvKey:              "vestack_varlog",
 				AnnotationBase:      "co_elastic_logs_path",
@@ -57,19 +57,27 @@ func TestDeploymentMutation(t *testing.T) {
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
-									Name: stringPtr("my-container"), // 添加容器名称
+									Name: stringPtr("my-container"),
 									Env: []*corev1.EnvVar{
-										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app.log"},
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/common-api-bff/common-api-bff_info.log"},
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/service-app_pe/service-app_pe_info.log"},
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/common-api-bff/common-api-bff_info.log"},
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/app/app_info.log"},
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/apps/service-app_pe/service-app_pe_info.log"},
 									},
 								},
 							},
 						},
 					},
 				},
-				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
+				Metadata: &metav1.ObjectMeta{},
 			},
 			expectedAnnotations: map[string]string{
-				"my-container/co_elastic_logs_path": "/var/log/app.log",
+				"co_elastic_logs_path":       "/var/log/apps/common-api-bff/common-api-bff_info.log",
+				"co_elastic_logs_path_ext_1": "/var/log/apps/service-app_pe/service-app_pe_info.log",
+				"co_elastic_logs_path_ext_2": "/var/log/apps/common-api-bff/common-api-bff_info.log",
+				"co_elastic_logs_path_ext_3": "/var/log/apps/app/app_info.log",
+				"co_elastic_logs_path_ext_4": "/var/log/apps/service-app_pe/service-app_pe_info.log",
 			},
 			shouldMutate: true,
 		},
@@ -104,8 +112,7 @@ func TestDeploymentMutation(t *testing.T) {
 				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
 			},
 			expectedAnnotations: map[string]string{
-				"container1/co_elastic_logs_path": "/var/log/app1.log",
-				"container2/co_elastic_logs_path": "/var/log/app2.log",
+				"co_elastic_logs_path": "/var/log/app1.log",
 			},
 			shouldMutate: true,
 		},
@@ -170,8 +177,8 @@ func TestDeploymentMutation(t *testing.T) {
 				},
 			},
 			expectedAnnotations: map[string]string{
-				"existing_template_annotation":      "template_value",
-				"my-container/co_elastic_logs_path": "/var/log/test.log",
+				"existing_template_annotation": "template_value",
+				"co_elastic_logs_path":         "/var/log/test.log",
 			},
 			shouldMutate: true,
 		},

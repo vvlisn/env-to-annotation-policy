@@ -57,11 +57,12 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 		deployment.Spec.Template.Metadata.Annotations = map[string]string{}
 	}
 
-	for _, container := range deployment.Spec.Template.Spec.Containers {
-		if processContainerEnv(container, deployment.Spec.Template.Metadata.Annotations, settings) {
+	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+		if processContainerEnv(deployment.Spec.Template.Spec.Containers[0], deployment.Spec.Template.Metadata.Annotations, settings) {
 			mutated = true
 		}
 	}
+	// init 容器不需要添加注解，所以不需要处理 InitContainers
 	return mutated
 }
 
@@ -87,9 +88,9 @@ func processContainerEnv(container *corev1.Container, annotations map[string]str
 		for i, path := range logPaths {
 			var annotationKey string
 			if i == 0 {
-				annotationKey = fmt.Sprintf("%s/%s", *container.Name, settings.AnnotationBase)
+				annotationKey = settings.AnnotationBase
 			} else {
-				annotationKey = fmt.Sprintf("%s/%s", *container.Name, fmt.Sprintf(settings.AnnotationExtFormat, i))
+				annotationKey = fmt.Sprintf(settings.AnnotationExtFormat, i)
 			}
 			annotations[annotationKey] = path
 		}

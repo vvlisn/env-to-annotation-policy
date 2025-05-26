@@ -38,7 +38,7 @@
                             "env": [
                                 {
                                     "name": "vestack_varlog",
-                                    "value": "/var/log/nginx/access.log,/var/log/nginx/error.log"
+                                    "value": "/var/log/app.log"
                                 }
                             ],
                             "ports": [

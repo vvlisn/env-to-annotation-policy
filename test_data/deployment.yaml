@@ -11,8 +11,6 @@ spec:
       app: my-app
   template:
     metadata:
-      annotation:
-        co_elastic_logs_path: /var/log/app.log
       labels:
         app: my-app
     spec:
