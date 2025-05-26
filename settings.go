@@ -21,6 +21,13 @@ type Settings struct {
 	AnnotationExtFormat string `json:"annotation_ext_format"`
 }
 
+// NewSettingsFromValidationReq 从 ValidationRequest 中提取设置.
+func NewSettingsFromValidationReq(validationReq *kubewarden_protocol.ValidationRequest) (Settings, error) {
+	settings := Settings{}
+	err := json.Unmarshal(validationReq.Settings, &settings)
+	return settings, err
+}
+
 // Valid 对 Settings 本身做合法性校验.
 func (s *Settings) Valid() (bool, error) {
 	if s.EnvKey == "" {
@@ -38,13 +45,6 @@ func (s *Settings) Valid() (bool, error) {
 		return false, errors.New("annotation_ext_format must contain %d placeholder")
 	}
 	return true, nil
-}
-
-// NewSettingsFromValidationReq 从 ValidationRequest 中提取设置.
-func NewSettingsFromValidationReq(validationReq *kubewarden_protocol.ValidationRequest) (Settings, error) {
-	settings := Settings{}
-	err := json.Unmarshal(validationReq.Settings, &settings)
-	return settings, err
 }
 
 // validateSettings 由 Kubewarden 在策略加载时调用.
