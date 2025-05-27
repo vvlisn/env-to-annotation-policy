@@ -66,7 +66,6 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 			mutated = true
 		}
 	}
-	// init 容器不需要添加注解，所以不需要处理 InitContainers
 	return mutated
 }
 
@@ -86,7 +85,6 @@ func processContainerEnv(container *corev1.Container, annotations map[string]str
 
 	if len(logPaths) > 0 {
 		if container.Name == nil {
-			// 如果容器没有名称，则无法为其添加带前缀的 annotation，跳过
 			return false
 		}
 		for i, path := range logPaths {
