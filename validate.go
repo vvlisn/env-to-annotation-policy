@@ -66,6 +66,15 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 			mutated = true
 		}
 	}
+
+	// 添加自定义注解
+	if settings.AdditionalAnnotations != nil {
+		for key, value := range settings.AdditionalAnnotations {
+			deployment.Spec.Template.Metadata.Annotations[key] = value
+			mutated = true
+		}
+	}
+
 	return mutated
 }
 

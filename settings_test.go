@@ -20,6 +20,61 @@ func TestValidSettings(t *testing.T) {
 	}
 }
 
+func TestValidSettingsWithAdditionalAnnotations(t *testing.T) {
+	settings := Settings{
+		EnvKey:              "test_env",
+		AnnotationBase:      "test_base",
+		AnnotationExtFormat: "test_ext_%d",
+		AdditionalAnnotations: map[string]string{
+			"key1": "value1",
+			"key2": "value2",
+		},
+	}
+
+	valid, err := settings.Valid()
+	if !valid {
+		t.Errorf("Expected settings to be valid, got error: %v", err)
+	}
+}
+
+func TestInvalidSettingsAdditionalAnnotationsEmptyKey(t *testing.T) {
+	settings := Settings{
+		EnvKey:              "test_env",
+		AnnotationBase:      "test_base",
+		AnnotationExtFormat: "test_ext_%d",
+		AdditionalAnnotations: map[string]string{
+			"": "value1",
+		},
+	}
+
+	valid, err := settings.Valid()
+	if valid {
+		t.Errorf("Expected settings to be invalid due to empty key in AdditionalAnnotations")
+	}
+	if err == nil || err.Error() != "additional_annotations keys cannot be empty" {
+		t.Errorf("Expected error 'additional_annotations keys cannot be empty', got: %v", err)
+	}
+}
+
+func TestInvalidSettingsAdditionalAnnotationsEmptyValue(t *testing.T) {
+	settings := Settings{
+		EnvKey:              "test_env",
+		AnnotationBase:      "test_base",
+		AnnotationExtFormat: "test_ext_%d",
+		AdditionalAnnotations: map[string]string{
+			"key1": "",
+		},
+	}
+
+	valid, err := settings.Valid()
+	if valid {
+		t.Errorf("Expected settings to be invalid due to empty value in AdditionalAnnotations")
+	}
+	if err == nil || err.Error() != "additional_annotations values cannot be empty" {
+		t.Errorf("Expected error 'additional_annotations values cannot be empty', got: %v", err)
+	}
+}
+
 func TestInvalidSettingsEmptyEnvKey(t *testing.T) {
 	settings := Settings{
 		EnvKey:              "",
@@ -85,7 +140,7 @@ func TestInvalidSettingsAnnotationExtFormatMissingPlaceholder(t *testing.T) {
 }
 
 func TestNewSettingsFromValidationReqWithValidSettings(t *testing.T) {
-	rawSettings := []byte(`{"env_key": "my_env", "annotation_base": "my_base", "annotation_ext_format": "my_ext_%d"}`)
+	rawSettings := []byte(`{"env_key": "my_env", "annotation_base": "my_base", "annotation_ext_format": "my_ext_%d", "additional_annotations": {"key1": "value1"}}`)
 	validationReq := &kubewarden_protocol.ValidationRequest{
 		Settings: rawSettings,
 	}
@@ -103,6 +158,9 @@ func TestNewSettingsFromValidationReqWithValidSettings(t *testing.T) {
 	}
 	if settings.AnnotationExtFormat != "my_ext_%d" {
 		t.Errorf("Expected AnnotationExtFormat to be 'my_ext_%%d', got '%s'", settings.AnnotationExtFormat)
+	}
+	if settings.AdditionalAnnotations["key1"] != "value1" {
+		t.Errorf("Expected AdditionalAnnotations['key1'] to be 'value1', got '%s'", settings.AdditionalAnnotations["key1"])
 	}
 }
 

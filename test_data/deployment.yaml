@@ -20,3 +20,9 @@ spec:
         env:
         - name: vestack_varlog
           value: /var/log/app.log
+        - name: vestack_varlog
+          value: /var/log/err.log
+        - name: vestack_varlog
+          value: /var/log/debug.log
+        - name: vestack_varlog
+          value: /var/log/war.log

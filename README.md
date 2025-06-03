@@ -18,7 +18,11 @@ You can configure the policy using a JSON structure. When using `kwctl run --set
     {
       "env_key": "MY_LOG_PATH_ENV",
       "annotation_base": "my.company.com/log-path",
-      "annotation_ext_format": "my.company.com/log-path-ext-%d"
+      "annotation_ext_format": "my.company.com/log-path-ext-%d",
+      "additional_annotations": {
+        "example.com/key1": "value1",
+        "example.com/key2": "value2"
+      }
     }
   ]
 }
@@ -30,7 +34,11 @@ When deploying the policy to a Kubewarden cluster, the settings are typically pr
 {
   "env_key": "MY_LOG_PATH_ENV",
   "annotation_base": "my.company.com/log-path",
-  "annotation_ext_format": "my.company.com/log-path-ext-%d"
+  "annotation_ext_format": "my.company.com/log-path-ext-%d",
+  "additional_annotations": {
+    "example.com/key1": "value1",
+    "example.com/key2": "value2"
+  }
 }
 ```
 
@@ -38,6 +46,7 @@ The available settings are:
 - `env_key` (string, mandatory): The name of the container environment variable whose value will be converted into an annotation.
 - `annotation_base` (string, mandatory): The base annotation key name. The value of `env_key` will be assigned to this annotation. If `env_key` contains multiple paths separated by commas, the first path will be assigned to this base annotation.
 - `annotation_ext_format` (string, mandatory): The format string for extended annotation keys. If `env_key` contains multiple paths, subsequent paths will be assigned to annotations generated using this format. The string must contain `%d`, which will be replaced by sequence numbers (1, 2, 3...). Example: `my.company.com/log-path-ext-%d`.
+- `additional_annotations` (map[string]string, optional): Custom key-value pairs to add as annotations. Both keys and values must be non-empty strings. This parameter is optional and can be omitted if not needed.
 
 ## Code organization
 
@@ -59,10 +68,14 @@ This policy utilizes several key concepts in its implementation:
    - Parses the environment variable's value (which can be a comma-separated list of paths).
    - Adds these paths as annotations to the Pod, using `annotation_base` for the first path and `annotation_ext_format` for subsequent paths.
 
-2. Configuration Management
-   - All settings (`env_key`, `annotation_base`, `annotation_ext_format`) are mandatory and validated at policy load time.
+2. Custom Annotations
+   - Adds any additional annotations specified in the `additional_annotations` parameter.
 
-3. Technical Considerations
+3. Configuration Management
+   - All settings (`env_key`, `annotation_base`, `annotation_ext_format`) are mandatory and validated at policy load time.
+   - `additional_annotations` is optional but validated if provided.
+
+4. Technical Considerations
    - Built with TinyGo for WebAssembly compatibility.
    - Uses Kubewarden's TinyGo-compatible Kubernetes types.
    - Implements Kubewarden policy interface:
@@ -78,11 +91,13 @@ The policy includes comprehensive unit tests that verify:
 1. Settings validation:
    - Valid settings.
    - Invalid settings (empty `env_key`, `annotation_base`, `annotation_ext_format`, or missing `%d` in `annotation_ext_format`).
+   - Validation of `additional_annotations` (empty keys/values).
    - JSON unmarshalling of settings.
 
 2. Deployment mutation:
    - Correctly converts a single environment variable to a base annotation.
    - Correctly converts multiple environment variables (comma-separated) to base and extended annotations.
+   - Adds custom annotations from `additional_annotations`.
    - Handles deployments with no target environment variable.
    - Preserves existing annotations.
 
@@ -96,6 +111,7 @@ The policy also includes end-to-end tests that verify the WebAssembly module beh
 
 1. Mutation behavior:
    - Correct annotation addition for single and multiple paths.
+   - Addition of custom annotations.
    - No mutation when the target environment variable is not found.
 
 The e2e tests are implemented in `e2e.bats` and can be run via:

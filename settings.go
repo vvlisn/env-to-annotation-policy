@@ -19,6 +19,8 @@ type Settings struct {
 	// AnnotationExtFormat 扩展注解键名格式，用于后续的日志路径
 	// 格式为: co_elastic_logs_path_ext_%d，其中 %d 会被替换为序号 1,2,3...
 	AnnotationExtFormat string `json:"annotation_ext_format"`
+	// AdditionalAnnotations 自定义注解键值对
+	AdditionalAnnotations map[string]string `json:"additional_annotations,omitempty"`
 }
 
 // NewSettingsFromValidationReq 从 ValidationRequest 中提取设置.
@@ -38,6 +40,18 @@ func (s *Settings) Valid() (bool, error) {
 	}
 	if s.AnnotationExtFormat == "" {
 		return false, errors.New("annotation_ext_format cannot be empty")
+	}
+
+	// 验证 AdditionalAnnotations 键值对
+	if s.AdditionalAnnotations != nil {
+		for key, value := range s.AdditionalAnnotations {
+			if key == "" {
+				return false, errors.New("additional_annotations keys cannot be empty")
+			}
+			if value == "" {
+				return false, errors.New("additional_annotations values cannot be empty")
+			}
+		}
 	}
 
 	// 验证 AnnotationExtFormat 是否包含格式化占位符 %d

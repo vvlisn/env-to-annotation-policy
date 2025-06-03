@@ -1,3 +1,9 @@
 {
-  "enforce_service_exists": true
+  "env_key": "LOG_PATHS",
+  "annotation_base": "co.elastic.logs/path",
+  "annotation_ext_format": "co.elastic.logs/path_ext_%d",
+  "additional_annotations": {
+    "example.com/key1": "value1",
+    "example.com/key2": "value2"
+  }
 }
