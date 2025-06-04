@@ -131,12 +131,12 @@
   [[ "$output" == *'"allowed":true'* ]]
   [[ "$output" == *'"patch"'* ]]
   
-  # 验证注解内容
+
   patch_b64=$(echo "$output" | tail -n 1 | jq -r '.patch')
   patch_decoded=$(echo "$patch_b64" | base64 --decode)
   echo "Decoded Patch (Complex Patterns): $patch_decoded"
   
-  # 使用jq进行精确断言
+
   echo "$patch_decoded" | jq -e '
     [
       {"op":"add","path":"/spec/template/metadata/annotations","value":{
