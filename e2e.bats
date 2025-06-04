@@ -61,10 +61,15 @@
     --settings-json '{ "env_key": "vestack_varlog", "annotation_base": "co_elastic_logs_path", "annotation_ext_format": "co_elastic_logs_path_ext_%d", "additional_annotations": { "example.com/key": "" } }' \
     "annotated-policy.wasm"
 
+  echo "==== RAW OUTPUT ===="
+  echo "$output"
+  echo "===================="
+  
   [ "$status" -ne 0 ]
   [[ "$output" == *'additional_annotations values cannot be empty'* ]]
   [[ "$output" != *'"allowed":true'* ]]
 }
+
 
 @test "Deployment without additional annotations is accepted and not mutated with additional annotations" {
   run kwctl run \
