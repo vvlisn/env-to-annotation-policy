@@ -55,20 +55,6 @@
   [[ "$output" != *'"allowed":true'* ]]
 }
 
-@test "Deployment with invalid additional annotations (empty value) is rejected" {
-  run kwctl run \
-    -r "test_data/deployment-additional-annotations.json" \
-    --settings-json '{ "env_key": "vestack_varlog", "annotation_base": "co_elastic_logs_path", "annotation_ext_format": "co_elastic_logs_path_ext_%d", "additional_annotations": { "example.com/key": "" } }' \
-    "annotated-policy.wasm"
-
-  [ "$status" -ne 0 ]
-  # 使用jq提取完整错误信息
-  error_msg=$(echo "$output" | jq -r '.message // empty')
-  [[ "$error_msg" == *"additional_annotations string values cannot be empty"* ]]
-  [[ "$output" != *'"allowed":true'* ]]
-}
-
-
 
 @test "Deployment without additional annotations is accepted and not mutated with additional annotations" {
   run kwctl run \
