@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: my-container
-        image: nginx
+        image: registry.cn-shenzhen.aliyuncs.com/vvlisn/nginx:latest
         env:
         - name: vestack_varlog
           value: /var/log/app.log

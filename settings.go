@@ -20,7 +20,7 @@ type Settings struct {
 	// 格式为: co_elastic_logs_path_ext_%d，其中 %d 会被替换为序号 1,2,3...
 	AnnotationExtFormat string `json:"annotation_ext_format"`
 	// AdditionalAnnotations 自定义注解键值对
-	AdditionalAnnotations map[string]string `json:"additional_annotations,omitempty"`
+	AdditionalAnnotations map[string]interface{} `json:"additional_annotations,omitempty"`
 }
 
 // NewSettingsFromValidationReq 从 ValidationRequest 中提取设置.
@@ -48,8 +48,12 @@ func (s *Settings) Valid() (bool, error) {
 			if key == "" {
 				return false, errors.New("additional_annotations keys cannot be empty")
 			}
-			if value == "" {
-				return false, errors.New("additional_annotations values cannot be empty")
+			// 允许布尔值、数字等非字符串类型
+			// 仅当值为字符串类型时检查是否为空
+			if strVal, ok := value.(string); ok {
+				if strVal == "" {
+					return false, errors.New("additional_annotations string values cannot be empty")
+				}
 			}
 		}
 	}

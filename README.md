@@ -120,6 +120,35 @@ The e2e tests are implemented in `e2e.bats` and can be run via:
 make e2e-tests
 ```
 
+## Deployment Example
+
+Here's how to deploy this policy as a ClusterAdmissionPolicy in Kubernetes:
+
+```yaml
+apiVersion: policies.kubewarden.io/v1
+kind: ClusterAdmissionPolicy
+metadata:
+  name: env-to-annotation-policy
+spec:
+  module: registry://ghcr.io/vvlisn/policies/env-to-annotation-policy:latest
+  rules:
+  - apiGroups: ["apps"]
+    apiVersions: ["v1"]
+    resources: ["deployments"]
+    operations:
+    - CREATE
+    - UPDATE
+  mutating: true
+  settings:
+    env_key: varlog
+    annotation_base: co_elastic_logs_path
+    annotation_ext_format: co_elastic_logs_path_ext_%d
+    additional_annotations:
+      co_elastic_logs_multiline_pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:'
+      co_elastic_logs_multiline_negate: false
+      co_elastic_logs_multiline_match: after
+```
+
 ## Automation
 
 This project has the following [GitHub Actions](https://docs.github.com/en/actions):
@@ -129,3 +158,8 @@ installs the `bats` utility and then runs the end-to-end test.
 - `unit-tests`: this action runs the Go unit tests.
 - `release`: this action builds the WebAssembly policy and pushes it to a user defined OCI registry
 ([ghcr](https://ghcr.io) is a good candidate).
+
+
+
+
+

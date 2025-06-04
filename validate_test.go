@@ -226,6 +226,90 @@ func TestDeploymentMutation(t *testing.T) {
 			},
 			shouldMutate: true,
 		},
+		{
+			name: "deployment with boolean annotations",
+			settings: Settings{
+				EnvKey:              "LOG_PATH",
+				AnnotationBase:      "co_elastic_logs_path",
+				AnnotationExtFormat: "co_elastic_logs_path_ext_%d",
+				AdditionalAnnotations: map[string]interface{}{
+					"co_elastic_logs_multiline_negate":  false,
+					"co_elastic_logs_multiline_match":   "after",
+					"co_elastic_logs_multiline_pattern": "^[[:space:]]",
+				},
+			},
+			deployment: appsv1.Deployment{
+				Spec: &appsv1.DeploymentSpec{
+					Template: &corev1.PodTemplateSpec{
+						Spec: &corev1.PodSpec{
+							Containers: []*corev1.Container{
+								{
+									Name: stringPtr("my-container"),
+									Env: []*corev1.EnvVar{
+										{Name: stringPtr("LOG_PATH"), Value: "/var/log/app.log"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedAnnotations: map[string]string{
+				"co_elastic_logs_path":              "/var/log/app.log",
+				"co_elastic_logs_multiline_negate":  "false",
+				"co_elastic_logs_multiline_match":   "after",
+				"co_elastic_logs_multiline_pattern": "^[[:space:]]",
+			},
+			shouldMutate: true,
+		},
+		{
+			name: "deployment with mixed type annotations",
+			settings: Settings{
+				AdditionalAnnotations: map[string]interface{}{
+					"string_val": "text",
+					"bool_val":   false,
+					"number_val": 42,
+					"float_val":  3.14,
+				},
+			},
+			deployment: appsv1.Deployment{
+				Spec: &appsv1.DeploymentSpec{
+					Template: &corev1.PodTemplateSpec{
+						Spec: &corev1.PodSpec{
+							Containers: []*corev1.Container{
+								{Name: stringPtr("my-container")},
+							},
+						},
+					},
+				},
+			},
+			expectedAnnotations: map[string]string{
+				"string_val": "text",
+				"bool_val":   "false",
+				"number_val": "42.000000",
+				"float_val":  "3.140000",
+			},
+			shouldMutate: true,
+		},
+		{
+			name: "deployment with nil additional annotations",
+			settings: Settings{
+				AdditionalAnnotations: nil,
+			},
+			deployment: appsv1.Deployment{
+				Spec: &appsv1.DeploymentSpec{
+					Template: &corev1.PodTemplateSpec{
+						Spec: &corev1.PodSpec{
+							Containers: []*corev1.Container{
+								{Name: stringPtr("my-container")},
+							},
+						},
+					},
+				},
+			},
+			expectedAnnotations: map[string]string{},
+			shouldMutate:        false,
+		},
 	}
 
 	for _, test := range tests {

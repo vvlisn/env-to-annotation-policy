@@ -11,6 +11,7 @@
   [[ "$output" != *'"patch"'* ]]
 }
 
+
 @test "Deployment with single target env variable is mutated with base annotation" {
   run kwctl run \
     -r "test_data/deployment-single-env.json" \

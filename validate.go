@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	appsv1 "github.com/kubewarden/k8s-objects/api/apps/v1"
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
@@ -68,9 +69,12 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 	}
 
 	// 添加自定义注解
+	// 添加自定义注解
 	if settings.AdditionalAnnotations != nil {
 		for key, value := range settings.AdditionalAnnotations {
-			deployment.Spec.Template.Metadata.Annotations[key] = value
+			// 调用类型转换函数
+			strValue := convertToString(value)
+			deployment.Spec.Template.Metadata.Annotations[key] = strValue
 			mutated = true
 		}
 	}
@@ -108,4 +112,19 @@ func processContainerEnv(container *corev1.Container, annotations map[string]str
 		return true
 	}
 	return false
+}
+
+func convertToString(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case bool:
+		return strconv.FormatBool(v)
+	case int, int32, int64:
+		return fmt.Sprintf("%d", v)
+	case float32, float64:
+		return fmt.Sprintf("%f", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

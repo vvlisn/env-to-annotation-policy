@@ -25,7 +25,7 @@ func TestValidSettingsWithAdditionalAnnotations(t *testing.T) {
 		EnvKey:              "test_env",
 		AnnotationBase:      "test_base",
 		AnnotationExtFormat: "test_ext_%d",
-		AdditionalAnnotations: map[string]string{
+		AdditionalAnnotations: map[string]interface{}{
 			"key1": "value1",
 			"key2": "value2",
 		},
@@ -42,7 +42,7 @@ func TestInvalidSettingsAdditionalAnnotationsEmptyKey(t *testing.T) {
 		EnvKey:              "test_env",
 		AnnotationBase:      "test_base",
 		AnnotationExtFormat: "test_ext_%d",
-		AdditionalAnnotations: map[string]string{
+		AdditionalAnnotations: map[string]interface{}{
 			"": "value1",
 		},
 	}
@@ -61,7 +61,7 @@ func TestInvalidSettingsAdditionalAnnotationsEmptyValue(t *testing.T) {
 		EnvKey:              "test_env",
 		AnnotationBase:      "test_base",
 		AnnotationExtFormat: "test_ext_%d",
-		AdditionalAnnotations: map[string]string{
+		AdditionalAnnotations: map[string]interface{}{
 			"key1": "",
 		},
 	}
@@ -70,8 +70,26 @@ func TestInvalidSettingsAdditionalAnnotationsEmptyValue(t *testing.T) {
 	if valid {
 		t.Errorf("Expected settings to be invalid due to empty value in AdditionalAnnotations")
 	}
-	if err == nil || err.Error() != "additional_annotations values cannot be empty" {
-		t.Errorf("Expected error 'additional_annotations values cannot be empty', got: %v", err)
+	if err == nil || err.Error() != "additional_annotations string values cannot be empty" {
+		t.Errorf("Expected error 'additional_annotations string values cannot be empty', got: %v", err)
+	}
+}
+
+func TestValidSettingsWithBooleanInAdditionalAnnotations(t *testing.T) {
+	settings := Settings{
+		EnvKey:              "test_env",
+		AnnotationBase:      "test_base",
+		AnnotationExtFormat: "test_ext_%d",
+		AdditionalAnnotations: map[string]interface{}{
+			"co_elastic_logs_multiline_pattern": "^[[:space:]]+(at|\\.{3})[[:space:]]+\\b|^Caused by:",
+			"co_elastic_logs_multiline_negate":  false,
+			"co_elastic_logs_multiline_match":   "after",
+		},
+	}
+
+	valid, err := settings.Valid()
+	if !valid {
+		t.Errorf("Expected settings to be valid with boolean values, got error: %v", err)
 	}
 }
 
