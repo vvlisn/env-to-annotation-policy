@@ -140,7 +140,15 @@ func TestInvalidSettingsAnnotationExtFormatMissingPlaceholder(t *testing.T) {
 }
 
 func TestNewSettingsFromValidationReqWithValidSettings(t *testing.T) {
-	rawSettings := []byte(`{"env_key": "my_env", "annotation_base": "my_base", "annotation_ext_format": "my_ext_%d", "additional_annotations": {"key1": "value1"}}`)
+	rawSettings := []byte(`{
+      "env_key": "my_env",
+      "annotation_base": "my_base",
+      "annotation_ext_format": "my_ext_%d",
+      "additional_annotations": {
+      "key1": "value1"
+  }
+}`)
+
 	validationReq := &kubewarden_protocol.ValidationRequest{
 		Settings: rawSettings,
 	}
@@ -160,7 +168,8 @@ func TestNewSettingsFromValidationReqWithValidSettings(t *testing.T) {
 		t.Errorf("Expected AnnotationExtFormat to be 'my_ext_%%d', got '%s'", settings.AnnotationExtFormat)
 	}
 	if settings.AdditionalAnnotations["key1"] != "value1" {
-		t.Errorf("Expected AdditionalAnnotations['key1'] to be 'value1', got '%s'", settings.AdditionalAnnotations["key1"])
+		t.Errorf("Expected AdditionalAnnotations['key1'] to be 'value1', got '%s'",
+			settings.AdditionalAnnotations["key1"])
 	}
 }
 

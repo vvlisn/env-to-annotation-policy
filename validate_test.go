@@ -106,6 +106,7 @@ func TestDeploymentMutation(t *testing.T) {
 			deployment: appsv1.Deployment{
 				Spec: &appsv1.DeploymentSpec{
 					Template: &corev1.PodTemplateSpec{
+						Metadata: &metav1.ObjectMeta{},
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
 								{
@@ -124,12 +125,40 @@ func TestDeploymentMutation(t *testing.T) {
 						},
 					},
 				},
-				Metadata: &metav1.ObjectMeta{}, // Initialize Metadata
+				Metadata: &metav1.ObjectMeta{},
 			},
 			expectedAnnotations: map[string]string{
-				"co_elastic_logs_path": "/var/log/app1.log",
+				"co_elastic_logs_path": "/var/log/app1.log", // 只处理第一个容器
 			},
 			shouldMutate: true,
+		},
+		{
+			name: "container with nil name",
+			settings: Settings{
+				EnvKey:              "vestack_varlog",
+				AnnotationBase:      "co_elastic_logs_path",
+				AnnotationExtFormat: "co_elastic_logs_path_ext_%d",
+			},
+			deployment: appsv1.Deployment{
+				Spec: &appsv1.DeploymentSpec{
+					Template: &corev1.PodTemplateSpec{
+						Metadata: &metav1.ObjectMeta{},
+						Spec: &corev1.PodSpec{
+							Containers: []*corev1.Container{
+								{
+									Name: nil,
+									Env: []*corev1.EnvVar{
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app.log"},
+									},
+								},
+							},
+						},
+					},
+				},
+				Metadata: &metav1.ObjectMeta{},
+			},
+			expectedAnnotations: map[string]string{},
+			shouldMutate:        false,
 		},
 		{
 			name: "deployment with no target env",

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	appsv1 "github.com/kubewarden/k8s-objects/api/apps/v1"
-	corev1 "github.com/kubewarden/k8s-objects/api/core/v1" // 导入 corev1
+	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
