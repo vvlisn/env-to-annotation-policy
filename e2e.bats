@@ -110,3 +110,42 @@
   echo "$patch_decoded" | jq -e '.[] | select(.op == "add" and .path == "/spec/template/metadata/annotations" and .value.co_elastic_logs_path_ext_4 == "/var/log/apps/service-app_pe/service-app_pe_info.log")'
   [ $? -eq 0 ]
 }
+
+
+@test "additional annotations with complex patterns" {
+  run kwctl run \
+    -r "test_data/deployment-single-env.json" \
+    --settings-json '{ 
+      "env_key": "vestack_varlog",
+      "annotation_base": "co_elastic_logs_path",
+      "annotation_ext_format": "co_elastic_logs_path_ext_%d",
+      "additional_annotations": {
+        "co_elastic_logs_multiline_pattern": "^[[:space:]]+(at|\\.{3})[[:space:]]+\\b|^Caused by:",
+        "co_elastic_logs_multiline_negate": false,
+        "co_elastic_logs_multiline_match": "after"
+      }
+    }' \
+    "annotated-policy.wasm"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"allowed":true'* ]]
+  [[ "$output" == *'"patch"'* ]]
+  
+  # 验证注解内容
+  patch_b64=$(echo "$output" | tail -n 1 | jq -r '.patch')
+  patch_decoded=$(echo "$patch_b64" | base64 --decode)
+  echo "Decoded Patch (Complex Patterns): $patch_decoded"
+  
+  # 使用jq进行精确断言
+  echo "$patch_decoded" | jq -e '
+    [
+      {"op":"add","path":"/spec/template/metadata/annotations","value":{
+        "co_elastic_logs_multiline_match": "after",
+        "co_elastic_logs_multiline_negate": "false",
+        "co_elastic_logs_multiline_pattern": "^[[:space:]]+(at|\\.{3})[[:space:]]+\\b|^Caused by:",
+        "co_elastic_logs_path": "/var/log/app.log"
+      }}
+    ]' 
+  [ $? -eq 0 ]
+}
+
