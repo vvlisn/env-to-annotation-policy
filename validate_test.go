@@ -265,6 +265,9 @@ func TestDeploymentMutation(t *testing.T) {
 		{
 			name: "deployment with mixed type annotations",
 			settings: Settings{
+				EnvKey:              "vestack_varlog",
+				AnnotationBase:      "co_elastic_logs_path",
+				AnnotationExtFormat: "co_elastic_logs_path_ext_%d",
 				AdditionalAnnotations: map[string]interface{}{
 					"string_val": "text",
 					"bool_val":   false,
@@ -277,17 +280,23 @@ func TestDeploymentMutation(t *testing.T) {
 					Template: &corev1.PodTemplateSpec{
 						Spec: &corev1.PodSpec{
 							Containers: []*corev1.Container{
-								{Name: stringPtr("my-container")},
+								{
+									Name: stringPtr("my-container"),
+									Env: []*corev1.EnvVar{
+										{Name: stringPtr("vestack_varlog"), Value: "/var/log/app.log"},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 			expectedAnnotations: map[string]string{
-				"string_val": "text",
-				"bool_val":   "false",
-				"number_val": "42.000000",
-				"float_val":  "3.140000",
+				"string_val":           "text",
+				"bool_val":             "false",
+				"number_val":           "42.000000",
+				"float_val":            "3.140000",
+				"co_elastic_logs_path": "/var/log/app.log",
 			},
 			shouldMutate: true,
 		},

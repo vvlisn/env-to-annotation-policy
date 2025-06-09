@@ -144,7 +144,7 @@ spec:
     annotation_base: co_elastic_logs_path
     annotation_ext_format: co_elastic_logs_path_ext_%d
     additional_annotations:
-      co_elastic_logs_multiline_pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:'
+      co_elastic_logs_multiline_pattern: "^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:"
       co_elastic_logs_multiline_negate: false
       co_elastic_logs_multiline_match: after
 ```

@@ -68,14 +68,25 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 		}
 	}
 
-	// 添加自定义注解
-	// 添加自定义注解
-	if settings.AdditionalAnnotations != nil {
+	// 添加自定义注解的条件判断
+	envExists := false
+	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+		for _, env := range deployment.Spec.Template.Spec.Containers[0].Env {
+			if env != nil && env.Name != nil && *env.Name == settings.EnvKey {
+				envExists = true
+				break
+			}
+		}
+	}
+
+	if envExists && settings.AdditionalAnnotations != nil {
 		for key, value := range settings.AdditionalAnnotations {
-			// 调用类型转换函数
-			strValue := convertToString(value)
-			deployment.Spec.Template.Metadata.Annotations[key] = strValue
-			mutated = true
+			if value != nil {
+				// 调用类型转换函数
+				strValue := convertToString(value)
+				deployment.Spec.Template.Metadata.Annotations[key] = strValue
+				mutated = true
+			}
 		}
 	}
 
