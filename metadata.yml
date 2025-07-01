@@ -1,8 +1,8 @@
 rules:
-  - apiGroups: ["apps"]
+  - apiGroups: [""]
     apiVersions: ["v1"]
     resources:
-      - "deployments"
+      - "pods"
     operations:
       - CREATE
       - UPDATE
@@ -12,8 +12,8 @@ executionMode: kubewarden-wapc
 backgroundAudit: false
 annotations:
   io.artifacthub.displayName: Env to Annotation Policy
-  io.artifacthub.resources: Deployment
-  io.artifacthub.keywords: env, annotation, kubernetes, kubewarden
+  io.artifacthub.resources: Pod
+  io.artifacthub.keywords: env, annotation, kubernetes, kubewarden, pod
   io.kubewarden.policy.ociUrl: ghcr.io/vvlisn/policies/env-to-annotation-policy
   io.kubewarden.policy.title: env-to-annotation-policy
   io.kubewarden.policy.description: A policy that converts specific container environment variables into pod annotations.

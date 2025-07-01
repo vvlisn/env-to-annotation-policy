@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	appsv1 "github.com/kubewarden/k8s-objects/api/apps/v1"
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
@@ -26,42 +25,42 @@ func validate(payload []byte) ([]byte, error) {
 		return kubewarden.RejectRequest(kubewarden.Message(err.Error()), kubewarden.Code(RejectCode))
 	}
 
-	return processDeployment(validationRequest, settings)
+	return processPod(validationRequest, settings)
 }
 
-// processDeployment 处理 Deployment 类型的资源.
-func processDeployment(req kubewarden_protocol.ValidationRequest, settings Settings) ([]byte, error) {
-	if req.Request.Kind.Kind != "Deployment" {
+// processPod 处理 Pod 类型的资源.
+func processPod(req kubewarden_protocol.ValidationRequest, settings Settings) ([]byte, error) {
+	if req.Request.Kind.Kind != "Pod" {
 		return kubewarden.AcceptRequest()
 	}
 
-	var deployment appsv1.Deployment
-	if err := json.Unmarshal(req.Request.Object, &deployment); err != nil {
-		return kubewarden.RejectRequest(kubewarden.Message("cannot unmarshal deployment"), kubewarden.Code(RejectCode))
+	var pod corev1.Pod
+	if err := json.Unmarshal(req.Request.Object, &pod); err != nil {
+		return kubewarden.RejectRequest(kubewarden.Message("cannot unmarshal pod"), kubewarden.Code(RejectCode))
 	}
 
-	mutated := mutateDeploymentContainers(&deployment, settings)
+	mutated := mutatePodContainers(&pod, settings)
 
 	if !mutated {
 		return kubewarden.AcceptRequest()
 	}
 
-	return kubewarden.MutateRequest(deployment)
+	return kubewarden.MutateRequest(pod)
 }
 
-func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings) bool {
+func mutatePodContainers(pod *corev1.Pod, settings Settings) bool {
 	mutated := false
-	if deployment.Spec.Template.Metadata == nil {
-		deployment.Spec.Template.Metadata = &metav1.ObjectMeta{}
+	if pod.Metadata == nil {
+		pod.Metadata = &metav1.ObjectMeta{}
 	}
-	if deployment.Spec.Template.Metadata.Annotations == nil {
-		deployment.Spec.Template.Metadata.Annotations = map[string]string{}
+	if pod.Metadata.Annotations == nil {
+		pod.Metadata.Annotations = map[string]string{}
 	}
 
-	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+	if len(pod.Spec.Containers) > 0 {
 		if processContainerEnv(
-			deployment.Spec.Template.Spec.Containers[0],
-			deployment.Spec.Template.Metadata.Annotations,
+			pod.Spec.Containers[0],
+			pod.Metadata.Annotations,
 			settings,
 		) {
 			mutated = true
@@ -70,8 +69,8 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 
 	// 添加自定义注解的条件判断
 	envExists := false
-	if len(deployment.Spec.Template.Spec.Containers) > 0 {
-		for _, env := range deployment.Spec.Template.Spec.Containers[0].Env {
+	if len(pod.Spec.Containers) > 0 {
+		for _, env := range pod.Spec.Containers[0].Env {
 			if env != nil && env.Name != nil && *env.Name == settings.EnvKey {
 				envExists = true
 				break
@@ -84,7 +83,7 @@ func mutateDeploymentContainers(deployment *appsv1.Deployment, settings Settings
 			if value != nil {
 				// 调用类型转换函数
 				strValue := convertToString(value)
-				deployment.Spec.Template.Metadata.Annotations[key] = strValue
+				pod.Metadata.Annotations[key] = strValue
 				mutated = true
 			}
 		}

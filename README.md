@@ -6,7 +6,7 @@ This policy converts specific container environment variables into pod annotatio
 
 ## Introduction
 
-This repository contains a Kubewarden policy written in Go. The policy mutates Kubernetes Pods (specifically Deployments, which manage Pods) by taking a specified environment variable's value from a container and adding it as an annotation to the Pod. This is particularly useful for integrating with logging or monitoring systems that consume annotations.
+This repository contains a Kubewarden policy written in Go. The policy mutates Kubernetes Pods by taking a specified environment variable's value from a container and adding it as an annotation to the Pod. This is particularly useful for integrating with logging or monitoring systems that consume annotations.
 
 The policy is configurable via runtime settings.
 
@@ -65,8 +65,8 @@ This policy utilizes several key concepts in its implementation:
 1. Environment Variable to Annotation Conversion
    - Iterates through containers in a Pod.
    - Identifies the specified `env_key` environment variable.
-   - Parses the environment variable's value (which can be a comma-separated list of paths).
-   - Adds these paths as annotations to the Pod, using `annotation_base` for the first path and `annotation_ext_format` for subsequent paths.
+   - Processes each occurrence of the environment variable.
+   - Adds these values as annotations to the Pod, using `annotation_base` for the first value and `annotation_ext_format` for subsequent values.
 
 2. Custom Annotations
    - Adds any additional annotations specified in the `additional_annotations` parameter.
@@ -81,6 +81,7 @@ This policy utilizes several key concepts in its implementation:
    - Implements Kubewarden policy interface:
      - `validate`: Main entry point for Pod mutation.
      - `validate_settings`: Entry point for settings validation.
+   - Only processes the first container in each Pod.
 
 See the [Kubewarden Policy SDK](https://github.com/kubewarden/policy-sdk-go) documentation for more details on policy development.
 
@@ -94,11 +95,11 @@ The policy includes comprehensive unit tests that verify:
    - Validation of `additional_annotations` (empty keys/values).
    - JSON unmarshalling of settings.
 
-2. Deployment mutation:
+2. Pod mutation:
    - Correctly converts a single environment variable to a base annotation.
-   - Correctly converts multiple environment variables (comma-separated) to base and extended annotations.
+   - Correctly converts multiple environment variables to base and extended annotations.
    - Adds custom annotations from `additional_annotations`.
-   - Handles deployments with no target environment variable.
+   - Handles pods with no target environment variable.
    - Preserves existing annotations.
 
 The unit tests can be run via:
@@ -110,7 +111,7 @@ make test
 The policy also includes end-to-end tests that verify the WebAssembly module behavior using the `kwctl` CLI. These tests validate:
 
 1. Mutation behavior:
-   - Correct annotation addition for single and multiple paths.
+   - Correct annotation addition for single and multiple environment variables.
    - Addition of custom annotations.
    - No mutation when the target environment variable is not found.
 
